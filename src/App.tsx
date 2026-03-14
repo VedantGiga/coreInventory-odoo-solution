@@ -9,9 +9,19 @@ import { Transfers } from './pages/Transfers';
 import { Adjustments } from './pages/Adjustments';
 import { History } from './pages/History';
 import { Settings } from './pages/Settings';
+import { useEffect } from 'react';
+import { useStore } from './store/useStore';
 import './App.css';
 
 function App() {
+  const { initialize, isAuthenticated } = useStore();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      initialize().catch(err => console.error('Failed to initialize data:', err));
+    }
+  }, [isAuthenticated, initialize]);
+
   return (
     <Router>
       <Routes>

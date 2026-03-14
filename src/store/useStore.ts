@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { v4 as uuidv4 } from 'uuid';
+import { apiFetch } from '../services/api';
 
 // --- MOCK DATA MODELS ---
 
@@ -75,14 +75,21 @@ interface AppState {
   // Auth
   user: User | null;
   isAuthenticated: boolean;
-  login: (email: string) => void;
+  login: (email: string) => Promise<void>;
   logout: () => void;
+  initialize: () => Promise<void>;
 
   // DB Collections
   locations: Location[];
   products: Product[];
   stockLevels: StockLevel[];
   movements: Movement[];
+
+  // Data Fetching
+  fetchProducts: () => Promise<void>;
+  fetchLocations: () => Promise<void>;
+  fetchStockLevels: () => Promise<void>;
+  fetchMovements: () => Promise<void>;
 
   // Mutators
   addProduct: (product: Product) => void;
@@ -97,121 +104,126 @@ interface AppState {
   validateMovement: (id: string) => void;
 }
 
-const generateReference = (type: MovementType, currentCount: number) => {
-  const prefix = {
-    RECEIPT: 'WH/IN',
-    DELIVERY: 'WH/OUT',
-    TRANSFER: 'WH/INT',
-    ADJUSTMENT: 'WH/ADJ'
-  }[type];
-  const seq = String(currentCount + 1).padStart(5, '0');
-  return `${prefix}/${seq}`;
-};
-
 export const useStore = create<AppState>()(
   persist(
     (set, get) => ({
       user: null,
       isAuthenticated: false,
-      login: (email) => set({
-        user: { id: 'u1', name: 'Demo Admin', role: 'admin', email },
-        isAuthenticated: true,
-      }),
-      logout: () => set({ user: null, isAuthenticated: false }),
+      login: async (email) => {
+        try {
+          const { user, token } = await apiFetch('/auth/login', {
+            method: 'POST',
+            body: JSON.stringify({ email })
+          });
+          localStorage.setItem('core-inventory-token', token);
+          set({ user, isAuthenticated: true });
+        } catch (error) {
+          console.error('Login failed:', error);
+          throw error;
+        }
+      },
+      logout: () => {
+        localStorage.removeItem('core-inventory-token');
+        set({ user: null, isAuthenticated: false });
+      },
+
+      initialize: async () => {
+        const { fetchProducts, fetchLocations, fetchStockLevels, fetchMovements } = get();
+        await Promise.all([
+          fetchProducts(),
+          fetchLocations(),
+          fetchStockLevels(),
+          fetchMovements()
+        ]);
+      },
 
       locations: initialLocations,
       products: initialProducts,
       stockLevels: initialStockLevels,
       movements: [],
 
-      addProduct: (p) => set((state) => ({ 
-        products: [...state.products, p] 
-      })),
+      fetchProducts: async () => {
+        const products = await apiFetch('/products');
+        set({ products });
+      },
+      fetchLocations: async () => {
+        const locations = await apiFetch('/locations');
+        set({ locations });
+      },
+      fetchStockLevels: async () => {
+        const stockLevels = await apiFetch('/stockLevels');
+        set({ stockLevels });
+      },
+      fetchMovements: async () => {
+        const movements = await apiFetch('/movements');
+        set({ movements });
+      },
+
+      addProduct: async (p) => {
+        await apiFetch('/products', {
+          method: 'POST',
+          body: JSON.stringify(p)
+        });
+        get().fetchProducts();
+      },
       
-      updateProduct: (id, p) => set((state) => ({
-        products: state.products.map((prod) => prod.id === id ? { ...prod, ...p } : prod)
-      })),
-
-      deleteProduct: (id) => set((state) => ({
-        products: state.products.filter(p => p.id !== id),
-        stockLevels: state.stockLevels.filter(s => s.productId !== id)
-      })),
-
-      addLocation: (l) => set((state) => ({
-        locations: [...state.locations, { ...l, id: uuidv4() }]
-      })),
-
-      setStockLevel: (productId, locationId, quantity) => set((state) => {
-        const existingIndex = state.stockLevels.findIndex(
-          (s) => s.productId === productId && s.locationId === locationId
-        );
-
-        if (existingIndex >= 0) {
-          const newStockLevels = [...state.stockLevels];
-          newStockLevels[existingIndex] = { ...newStockLevels[existingIndex], quantity };
-          return { stockLevels: newStockLevels };
-        } else {
-          return {
-            stockLevels: [...state.stockLevels, { productId, locationId, quantity }]
-          };
-        }
-      }),
-
-      createMovement: (m) => set((state) => {
-        const typeCount = state.movements.filter(mov => mov.type === m.type).length;
-        const newMovement: Movement = {
-          ...m,
-          id: uuidv4(),
-          reference: generateReference(m.type, typeCount),
-        };
-        return { movements: [...state.movements, newMovement] };
-      }),
-
-      updateMovementStatus: (id, status) => set((state) => ({
-        movements: state.movements.map(m => m.id === id ? { ...m, status } : m)
-      })),
-
-      validateMovement: (id) => {
-        const state = get();
-        const movement = state.movements.find(m => m.id === id);
-        if (!movement || movement.status === 'DONE') return;
-
-        // Process stock levels based on movement lines
-        let newStockLevels = [...state.stockLevels];
-
-        movement.lines.forEach(line => {
-          // Decrease fromLocation stock (skip if vendor or virtual source where stock is infinite)
-          if (movement.fromLocationId !== 'loc-vendor' && movement.fromLocationId !== 'loc-virtual') {
-            const existingFrom = newStockLevels.find(s => s.productId === line.productId && s.locationId === movement.fromLocationId);
-            if (existingFrom) {
-              existingFrom.quantity -= line.quantity;
-            } else {
-              newStockLevels.push({ productId: line.productId, locationId: movement.fromLocationId, quantity: -line.quantity }); // Allow negative for flexibility in this simple app
-            }
-          }
-
-          // Increase toLocation stock (skip if customer or virtual destination where stock goes out)
-          if (movement.toLocationId !== 'loc-customer' && movement.toLocationId !== 'loc-virtual') {
-            const existingTo = newStockLevels.find(s => s.productId === line.productId && s.locationId === movement.toLocationId);
-            if (existingTo) {
-              existingTo.quantity += line.quantity;
-            } else {
-              newStockLevels.push({ productId: line.productId, locationId: movement.toLocationId, quantity: line.quantity });
-            }
-          }
+      updateProduct: async (id, p) => {
+        await apiFetch(`/products/${id}`, {
+          method: 'PUT',
+          body: JSON.stringify(p)
         });
+        get().fetchProducts();
+      },
 
-        // Filter out zero stocks to keep it clean (optional, keeping it here for clarity)
-        newStockLevels = newStockLevels.filter(s => s.quantity !== 0);
+      deleteProduct: async (id) => {
+        await apiFetch(`/products/${id}`, { method: 'DELETE' });
+        get().fetchProducts();
+        get().fetchStockLevels();
+      },
 
-        set({
-          stockLevels: newStockLevels,
-          movements: state.movements.map(m => m.id === id ? { ...m, status: 'DONE' } : m)
+      addLocation: async (l) => {
+        await apiFetch('/locations', {
+          method: 'POST',
+          body: JSON.stringify(l)
         });
+        get().fetchLocations();
+      },
+
+      setStockLevel: async (_productId, _locationId, _quantity) => {
+        // Note: The backend doesn't have a direct setStockLevel endpoint, 
+        // typically this would be an ADJUSTMENT movement or a specialized endpoint.
+        // For now, we'll implement a simple put if we had one, but the backend schema 
+        // implies stock levels are updated via movements.
+        // To keep it simple and fix the user's immediate need:
+        console.warn('Manual stock update via API not yet implemented in backend. Use movements.');
+      },
+
+      createMovement: async (m) => {
+        await apiFetch('/movements', {
+          method: 'POST',
+          body: JSON.stringify(m)
+        });
+        get().fetchMovements();
+      },
+
+      updateMovementStatus: async (id, status) => {
+        await apiFetch(`/movements/${id}/status`, {
+          method: 'PUT',
+          body: JSON.stringify({ status })
+        });
+        get().fetchMovements();
+      },
+
+      validateMovement: async (id) => {
+        await apiFetch(`/movements/${id}/validate`, {
+          method: 'POST'
+        });
+        get().initialize(); // Refresh everything after validation
       }
     }),
     {
       name: 'core-inventory-data',
+      partialize: (state) => ({ user: state.user, isAuthenticated: state.isAuthenticated }), // Only persist auth
     }
   )
 );

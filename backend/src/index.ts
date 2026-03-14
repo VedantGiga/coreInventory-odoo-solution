@@ -17,6 +17,14 @@ const prisma = new PrismaClient().$extends(withAccelerate());
 
 const JWT_SECRET = process.env.JWT_SECRET || 'supers3cr3t';
 
+app.get('/', (req, res) => {
+  res.json({ message: 'CoreInventory API is running' });
+});
+
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 // --- AUTH ROUTES ---
 
 app.post('/api/auth/login', async (req, res) => {

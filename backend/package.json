@@ -5,8 +5,11 @@
   "main": "index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc",
-    "start": "node dist/index.js"
+    "build": "prisma generate && tsc",
+    "start": "node dist/index.js",
+    "postinstall": "prisma generate",
+    "seed": "tsx seed.ts",
+    "verify": "tsx verify.ts"
   },
   "keywords": [],
   "author": "",

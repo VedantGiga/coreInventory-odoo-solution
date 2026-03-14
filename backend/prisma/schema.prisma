@@ -1,0 +1,91 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("admin") // admin, manager, staff
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  movements Movement[]
+}
+
+model Location {
+  id        String   @id @default(uuid())
+  name      String
+  type      String   // warehouse, rack, customer, vendor, virtual
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  stockLevels StockLevel[]
+  fromMovements Movement[] @relation("FromLocation")
+  toMovements   Movement[] @relation("ToLocation")
+}
+
+model Product {
+  id           String   @id @default(uuid())
+  name         String
+  sku          String   @unique
+  category     String
+  unit         String
+  reorderPoint Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  stockLevels  StockLevel[]
+  movementLines MovementLine[]
+}
+
+model StockLevel {
+  id         String   @id @default(uuid())
+  productId  String
+  locationId String
+  quantity   Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  product    Product  @relation(fields: [productId], references: [id])
+  location   Location @relation(fields: [locationId], references: [id])
+
+  @@unique([productId, locationId])
+}
+
+model Movement {
+  id             String   @id @default(uuid())
+  reference      String   @unique
+  type           String   // RECEIPT, DELIVERY, TRANSFER, ADJUSTMENT
+  fromLocationId String
+  toLocationId   String
+  status         String   // DRAFT, WAITING, READY, DONE, CANCELED
+  date           DateTime @default(now())
+  notes          String?
+  createdById    String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  fromLocation   Location @relation("FromLocation", fields: [fromLocationId], references: [id])
+  toLocation     Location @relation("ToLocation", fields: [toLocationId], references: [id])
+  createdBy      User     @relation(fields: [createdById], references: [id])
+
+  lines          MovementLine[]
+}
+
+model MovementLine {
+  id         String   @id @default(uuid())
+  movementId String
+  productId  String
+  quantity   Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  movement   Movement @relation(fields: [movementId], references: [id], onDelete: Cascade)
+  product    Product  @relation(fields: [productId], references: [id])
+}

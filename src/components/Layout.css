@@ -1,0 +1,15 @@
+.layout-wrapper {
+  min-height: 100vh;
+  width: 100%;
+}
+
+.main-content {
+  margin-left: var(--sidebar-width);
+  width: calc(100% - var(--sidebar-width));
+  min-height: 100vh;
+}
+
+.page-content {
+  padding: 2rem;
+  flex: 1;
+}

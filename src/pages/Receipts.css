@@ -1,0 +1,28 @@
+.lines-section {
+  background-color: var(--bg-base);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  border: 1px solid var(--border);
+}
+
+/* Reusing modal-overlay and modal-content from global or Products if possible, 
+   but added here for completeness if they aren't global yet */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+}
+
+.modal-content {
+  width: 100%;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-xl);
+  max-height: 90vh;
+  overflow-y: auto;
+}

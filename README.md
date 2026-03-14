@@ -1,73 +1,74 @@
-# React + TypeScript + Vite
+# CoreInventory Odoo Solution
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A premium, modern inventory management system built with React, TypeScript, and Vite, featuring a sleek deep black UI. This application provides a comprehensive solution for tracking products, receipts, deliveries, transfers, and adjustments.
 
-Currently, two official plugins are available:
+## 🚀 Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Advanced Dashboard**: Real-time overview of inventory metrics and recent activities.
+- **Product Management**: Comprehensive tracking of inventory items with detailed metadata.
+- **Operations Workflow**:
+  - **Receipts**: Manage incoming stock from vendors.
+  - **Deliveries**: Track outgoing shipments to customers.
+  - **Transfers**: Handle internal stock movements between locations.
+  - **Adjustments**: Record and reconcile inventory discrepancies.
+- **History Tracking**: Complete audit trail of all inventory movements.
+- **Premium UI**: Modern, responsive interface with a "Deep Black" theme and glassmorphic elements.
+- **Authentication**: Secure login system for authorized personnel.
 
-## React Compiler
+## 🛠️ Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Frontend**: React 19, Vite, TypeScript
+- **Styling**: Vanilla CSS with PostCSS (Premium custom theme)
+- **Routing**: React Router 7
+- **State Management**: Zustand
+- **Backend/DB**: Prisma, Express, PostgreSQL (via Vercel/Prisma Accelerate)
+- **Utilities**: Lucide React (Icons), Date-fns, UUID
 
-## Expanding the ESLint configuration
+## 📦 Getting Started
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Prerequisites
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- Node.js (Latest LTS version recommended)
+- npm or yarn
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### Installation
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+1. Clone the repository:
+   ```bash
+   git clone [repository-url]
+   cd coreInventory-odoo-solution
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Set up environment variables:
+   Create a `.env` file in the root directory and add your database and JWT secrets.
+
+4. Generate Prisma client:
+   ```bash
+   npx prisma generate
+   ```
+
+### Running Locally
+
+To start the development server:
+
+```bash
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+The application will be available at `http://localhost:5173`.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## 🎨 UI Theme
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+The application features a "Deep Black" premium theme designed for high-contrast environments and reduced eye strain. Key color tokens:
+- **Base Background**: `#020617` (Deep Obsidian)
+- **Surface Background**: `#0f172a` (Deep Slate)
+- **Primary Accent**: `#3b82f6` (Vibrant Blue)
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.

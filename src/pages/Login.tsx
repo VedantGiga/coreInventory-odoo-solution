@@ -7,14 +7,24 @@ import './Login.css';
 export function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const { login } = useStore();
   const navigate = useNavigate();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (email && password) {
-      login(email);
-      navigate('/');
+      setLoading(true);
+      setError('');
+      try {
+        await login(email);
+        navigate('/');
+      } catch (err: any) {
+        setError(err.message || 'Login failed. Please check your credentials.');
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -64,8 +74,10 @@ export function Login() {
             </div>
           </div>
 
-          <button type="submit" className="btn btn-primary w-full mt-2">
-            Sign In
+          {error && <p className="text-danger text-sm text-center mb-2">{error}</p>}
+
+          <button type="submit" className="btn btn-primary w-full mt-2" disabled={loading}>
+            {loading ? 'Signing In...' : 'Sign In'}
           </button>
         </form>
       </div>

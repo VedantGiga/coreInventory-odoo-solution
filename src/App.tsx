@@ -14,13 +14,18 @@ import { useStore } from './store/useStore';
 import './App.css';
 
 function App() {
-  const { initialize, isAuthenticated } = useStore();
+  const { initialize, isAuthenticated, logout } = useStore();
 
   useEffect(() => {
     if (isAuthenticated) {
-      initialize().catch(err => console.error('Failed to initialize data:', err));
+      initialize().catch(err => {
+        console.error('Failed to initialize data:', err);
+        if (err.message === 'Unauthorized') {
+          logout();
+        }
+      });
     }
-  }, [isAuthenticated, initialize]);
+  }, [isAuthenticated, initialize, logout]);
 
   return (
     <Router>

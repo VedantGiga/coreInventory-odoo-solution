@@ -65,19 +65,9 @@ const initialLocations: Location[] = [
   { id: 'loc-virtual', name: 'Virtual Locations / Inventory Loss', type: 'virtual' },
 ];
 
-const initialProducts: Product[] = [
-  { id: 'prod-1', name: 'Steel Rods (10mm)', sku: 'SR-10-M', category: 'Raw Material', unit: 'kg', reorderPoint: 50 },
-  { id: 'prod-2', name: 'Office Chair (Ergonomic)', sku: 'CH-ERGO-01', category: 'Furniture', unit: 'pcs', reorderPoint: 10 },
-  { id: 'prod-3', name: 'Wooden Desk', sku: 'DESK-W01', category: 'Furniture', unit: 'pcs', reorderPoint: 5 },
-  { id: 'prod-4', name: 'Aluminum Sheets', sku: 'AL-SH-5MM', category: 'Raw Material', unit: 'sqm', reorderPoint: 100 },
-];
+const initialProducts: Product[] = [];
 
-const initialStockLevels: StockLevel[] = [
-  { productId: 'prod-1', locationId: 'loc-main', quantity: 15 },
-  { productId: 'prod-2', locationId: 'loc-rack-A', quantity: 24 },
-  { productId: 'prod-3', locationId: 'loc-rack-B', quantity: 8 },
-  { productId: 'prod-4', locationId: 'loc-main', quantity: 250 },
-];
+const initialStockLevels: StockLevel[] = [];
 
 // --- ZUSTAND STORE ---
 

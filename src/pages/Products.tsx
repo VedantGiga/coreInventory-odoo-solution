@@ -1,10 +1,11 @@
 import { useState, useMemo } from 'react';
 import { Package, Plus, Search, Edit2, Trash2 } from 'lucide-react';
+import { v4 as uuidv4 } from 'uuid';
 import { useStore, type Product } from '../store/useStore';
 import './Products.css';
 
 export function Products() {
-  const { products, stockLevels, addProduct, updateProduct, deleteProduct } = useStore();
+  const { products, stockLevels, addProduct, updateProduct, deleteProduct, setStockLevel } = useStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -15,6 +16,7 @@ export function Products() {
   const [category, setCategory] = useState('');
   const [unit, setUnit] = useState('pcs');
   const [reorderPoint, setReorderPoint] = useState<number>(0);
+  const [stock, setStock] = useState<number>(0);
 
   const filteredProducts = useMemo(() => {
     return products.filter(p => 
@@ -38,6 +40,7 @@ export function Products() {
       setCategory(product.category);
       setUnit(product.unit);
       setReorderPoint(product.reorderPoint);
+      setStock(getProductStock(product.id));
     } else {
       setEditingProduct(null);
       setName('');
@@ -45,6 +48,7 @@ export function Products() {
       setCategory('');
       setUnit('pcs');
       setReorderPoint(0);
+      setStock(0);
     }
     setIsModalOpen(true);
   };
@@ -58,8 +62,11 @@ export function Products() {
     e.preventDefault();
     if (editingProduct) {
       updateProduct(editingProduct.id, { name, sku, category, unit, reorderPoint });
+      setStockLevel(editingProduct.id, 'loc-main', stock);
     } else {
-      addProduct({ name, sku, category, unit, reorderPoint });
+      const newId = uuidv4();
+      addProduct({ id: newId, name, sku, category, unit, reorderPoint });
+      setStockLevel(newId, 'loc-main', stock);
     }
     handeCloseModal();
   };
@@ -207,9 +214,15 @@ export function Products() {
                 </div>
               </div>
 
-              <div className="form-group flex-col">
-                <label className="label">Reorder Point (Low Stock Alert Level)</label>
-                <input required type="number" min="0" className="input-field" value={reorderPoint} onChange={e => setReorderPoint(parseInt(e.target.value))} />
+              <div className="grid gap-4" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
+                <div className="form-group flex-col">
+                  <label className="label">Reorder Point (Low Stock)</label>
+                  <input required type="number" min="0" className="input-field" value={reorderPoint} onChange={e => setReorderPoint(parseInt(e.target.value) || 0)} />
+                </div>
+                <div className="form-group flex-col">
+                  <label className="label">Current Stock Quantity</label>
+                  <input required type="number" min="0" className="input-field" value={stock} onChange={e => setStock(parseInt(e.target.value) || 0)} />
+                </div>
               </div>
 
               <div className="flex justify-end gap-3 pt-4 border-t mt-2" style={{ borderColor: 'var(--border)' }}>

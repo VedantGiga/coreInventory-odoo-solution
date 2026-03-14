@@ -85,11 +85,12 @@ interface AppState {
   movements: Movement[];
 
   // Mutators
-  addProduct: (product: Omit<Product, 'id'>) => void;
+  addProduct: (product: Product) => void;
   updateProduct: (id: string, product: Partial<Product>) => void;
   deleteProduct: (id: string) => void;
 
   addLocation: (location: Omit<Location, 'id'>) => void;
+  setStockLevel: (productId: string, locationId: string, quantity: number) => void;
 
   createMovement: (movement: Omit<Movement, 'id' | 'reference'>) => void;
   updateMovementStatus: (id: string, status: MovementStatus) => void;
@@ -124,7 +125,7 @@ export const useStore = create<AppState>()(
       movements: [],
 
       addProduct: (p) => set((state) => ({ 
-        products: [...state.products, { ...p, id: uuidv4() }] 
+        products: [...state.products, p] 
       })),
       
       updateProduct: (id, p) => set((state) => ({
@@ -139,6 +140,22 @@ export const useStore = create<AppState>()(
       addLocation: (l) => set((state) => ({
         locations: [...state.locations, { ...l, id: uuidv4() }]
       })),
+
+      setStockLevel: (productId, locationId, quantity) => set((state) => {
+        const existingIndex = state.stockLevels.findIndex(
+          (s) => s.productId === productId && s.locationId === locationId
+        );
+
+        if (existingIndex >= 0) {
+          const newStockLevels = [...state.stockLevels];
+          newStockLevels[existingIndex] = { ...newStockLevels[existingIndex], quantity };
+          return { stockLevels: newStockLevels };
+        } else {
+          return {
+            stockLevels: [...state.stockLevels, { productId, locationId, quantity }]
+          };
+        }
+      }),
 
       createMovement: (m) => set((state) => {
         const typeCount = state.movements.filter(mov => mov.type === m.type).length;
